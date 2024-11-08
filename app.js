@@ -3,9 +3,13 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const db = require('./db'); // Import de la configuration de la base de données
+const cors = require('cors'); // Import de CORS
 
 // Middleware pour analyser les requêtes JSON
 app.use(bodyParser.json());
+
+// Utilisation de CORS pour autoriser les requêtes depuis n'importe quelle origine
+app.use(cors());
 
 // Import des fichiers de routes
 const authRoutes = require('./routes/auth');

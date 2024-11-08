@@ -2,12 +2,16 @@ const db = require('../db');
 
 // Obtenir toutes les réservations
 exports.getAllReservations = (req, res) => {
-  const sql = 'SELECT * FROM reservation';
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+    const sql = 'SELECT * FROM reservation';
+    db.query(sql, (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        // Vous pouvez également vérifier si les résultats sont vides et renvoyer un tableau vide si nécessaire
+        res.json(results || []); // Si les résultats sont vides, renvoyer un tableau vide
+    });
 };
+
 
 // Obtenir une réservation par ID
 exports.getReservationById = (req, res) => {
