@@ -20,7 +20,4 @@ router.get('/getAllEmployees', administrationController.getAllEmployees);
 // Consulter un employé par ID
 router.get('/getEmployeeById/:id_personnel', administrationController.getEmployeeById);
 
-// Modifier les horaires de départ d'un voyage
-router.put('/updateDepartureTime', administrationController.updateDepartureTime);
-
 module.exports = router;

@@ -23,8 +23,7 @@ router.put('/:id', voyageController.updateVoyage);
 // Route pour annuler un voyage
 router.put('/:id/cancel', voyageController.cancelVoyage);
 
-// Route pour mettre à jour le statut d'un voyage
+// Route pour mettre à jour uniquement le statut d'un voyage
 router.put('/:id/statut', voyageController.updateStatutVoyage);
-
 
 module.exports = router;

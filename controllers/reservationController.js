@@ -3,7 +3,7 @@ const db = require('../db');
 // Créer une nouvelle réservation
 exports.createReservation = (req, res) => {
   const { statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive } = req.body;
-  
+
   // Insertion de la réservation
   const sql = 'INSERT INTO reservation (statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive) VALUES (?, ?, ?, ?, ?, ?)';
   db.query(sql, [statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive], (err, result) => {
@@ -106,5 +106,45 @@ exports.updateReservation = (req, res) => {
         res.json({ message: 'Réservation mise à jour avec succès' });
       }
     });
+  });
+};
+
+// Récupérer toutes les réservations avec tri et recherche
+exports.getAllReservations = (req, res) => {
+  const { sortBy, clientName, startDate, endDate } = req.query;
+
+  let sql = 'SELECT reservation.*, client.nom FROM reservation JOIN client ON reservation.id_client = client.id_client';
+
+  // Filtrer par nom du client
+  if (clientName) {
+    sql += ` WHERE client.nom LIKE ?`;
+  }
+
+  // Filtrer par date de réservation
+  if (startDate && endDate) {
+    sql += clientName ? ' AND ' : ' WHERE ';
+    sql += 'reservation.date_reservation BETWEEN ? AND ?';
+  }
+
+  // Trier par date
+  if (sortBy) {
+    sql += ` ORDER BY reservation.date_reservation ${sortBy === 'desc' ? 'DESC' : 'ASC'}`;
+  }
+
+  db.query(sql, [clientName ? `%${clientName}%` : null, startDate, endDate], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+};
+
+// Récupérer une réservation par ID
+exports.getReservationById = (req, res) => {
+  const sql = 'SELECT reservation.*, client.nom FROM reservation JOIN client ON reservation.id_client = client.id_client WHERE id_reservation = ?';
+  db.query(sql, [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Réservation non trouvée' });
+    }
+    res.json(result[0]);
   });
 };
