@@ -17,7 +17,4 @@ router.post('/registerEmployee', authController.registerEmployee);
 // Route pour la connexion d'un employé
 router.post('/loginEmployee', authController.loginEmployee);
 
-// Middleware pour vérifier le token JWT
-router.use('/verifyToken', authController.verifyToken);
-
 module.exports = router;

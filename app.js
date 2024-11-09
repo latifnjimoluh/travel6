@@ -2,24 +2,29 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const db = require('./db'); // Import de la configuration de la base de données
-const cors = require('cors'); // Import de CORS
-const bcrypt = require('bcrypt'); // Importation de bcrypt pour le hachage des mots de passe
+const db = require('./db');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
+
 
 // Middleware pour analyser les requêtes JSON
-app.use(bodyParser.json());
+app.use(express.json()); // Utilisation du middleware intégré d'Express
 
-// Utilisation de CORS pour autoriser les requêtes depuis n'importe quelle origine
-app.use(cors());
+// Middleware CORS avec options spécifiques (si nécessaire)
+// const corsOptions = {
+//   origin: 'http://example.com', // Origine autorisée
+//   methods: 'GET,POST,PUT,DELETE', // Méthodes HTTP autorisées
+//   allowedHeaders: 'Content-Type,Authorization'
+// };
+// app.use(cors(corsOptions));
 
-// Middleware de validation des entrées (facultatif)
+// Middleware pour valider les entrées (facultatif)
 app.use((req, res, next) => {
-  // Par exemple, vous pouvez ajouter une validation ici pour vérifier les entrées de la requête
-  // Comme vérifier si le mot de passe respecte une certaine longueur, etc.
   next();
 });
 
 // Import des fichiers de routes
+const { verifyToken } = require('./routes/authMiddleware'); // Importez verifyToken de manière destructurée
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/clients');
 const voyageRoutes = require('./routes/voyages');
@@ -31,17 +36,19 @@ const vehiculeRoutes = require('./routes/vehicule');
 const chauffeurRoutes = require('./routes/chauffeur');
 const classeRoutes = require('./routes/classe');
 
-// Utilisation des routes avec le préfixe /api
-app.use('/api/auth', authRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/voyages', voyageRoutes);
-app.use('/api/reservations', reservationRoutes);
-app.use('/api/paiements', paiementRoutes);
-app.use('/api/admin', administrationRoutes);
-app.use('/api/trajets', trajetRoutes); 
-app.use('/api/vehicules', vehiculeRoutes);
-app.use('/api/chauffeurs', chauffeurRoutes);
-app.use('/api/classes', classeRoutes);
+// Protection des routes avec le middleware verifyToken
+
+app.use('/api/auth', verifyToken, authRoutes);
+app.use('/api/auth', verifyToken,  authRoutes);
+app.use('/api/clients', verifyToken,   clientRoutes); 
+app.use('/api/voyages', verifyToken,   voyageRoutes);
+app.use('/api/reservations', verifyToken,   reservationRoutes);
+app.use('/api/paiements', verifyToken,   paiementRoutes);
+app.use('/api/admin', verifyToken,   administrationRoutes);
+app.use('/api/trajets', verifyToken,   trajetRoutes);
+app.use('/api/vehicules', verifyToken,   vehiculeRoutes);
+app.use('/api/chauffeurs', verifyToken,   chauffeurRoutes);
+app.use('/api/classes', verifyToken,   classeRoutes);
 
 // Route d'accueil par défaut
 app.get('/', (req, res) => {
