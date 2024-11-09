@@ -77,15 +77,3 @@ exports.getEmployeeById = (req, res) => {
   });
 };
 
-// Modifier les horaires de départ des voyages réguliers
-exports.updateDepartureTime = (req, res) => {
-  const { id_voyage, heure_depart } = req.body;
-  const sql = 'UPDATE voyage SET heure_depart = ? WHERE id_voyage = ?';
-  db.query(sql, [heure_depart, id_voyage], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Voyage non trouvé' });
-    }
-    res.json({ message: 'Horaire de départ du voyage modifié avec succès' });
-  });
-};
