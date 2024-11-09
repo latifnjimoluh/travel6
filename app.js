@@ -28,6 +28,9 @@ const paiementRoutes = require('./routes/paiements');
 const billetRoutes = require('./routes/billets');
 const administrationRoutes = require('./routes/administration');
 const trajetRoutes = require('./routes/trajets');
+const vehiculeRoutes = require('./routes/vehicule');
+const chauffeurRoutes = require('./routes/chauffeur');
+const classeRoutes = require('./routes/classe');
 
 // Utilisation des routes avec le préfixe /api
 app.use('/api/auth', authRoutes);
@@ -38,6 +41,9 @@ app.use('/api/paiements', paiementRoutes);
 app.use('/api/billets', billetRoutes);
 app.use('/api/admin', administrationRoutes);
 app.use('/api/trajets', trajetRoutes); 
+app.use('/api/vehicules', vehiculeRoutes);
+app.use('/api/chauffeurs', chauffeurRoutes);
+app.use('/api/classes', classeRoutes);
 
 // Route d'accueil par défaut
 app.get('/', (req, res) => {
