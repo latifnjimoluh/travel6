@@ -14,5 +14,8 @@ router.post('/', clientController.createClient);
 // Route pour mettre à jour un client
 router.put('/:id', clientController.updateClient);
 
+// Route pour supprimer un client
+router.delete('/:id', clientController.deleteClient);
+
 // Exporter le routeur
 module.exports = router;
