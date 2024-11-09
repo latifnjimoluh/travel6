@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const reservationController = require('../controllers/reservationController'); // Import du contrôleur
+const reservationController = require('../controllers/reservationController');
 
 // Middleware pour analyser les requêtes JSON
 router.use(express.json());
@@ -17,10 +17,7 @@ router.post('/', reservationController.createReservation);
 // Route pour mettre à jour une réservation
 router.put('/:id', reservationController.updateReservation);
 
-// Route pour annuler une réservation
-router.put('/:id/cancel', reservationController.cancelReservation);
-
-// Route pour confirmer une réservation
-router.put('/:id/confirm', reservationController.confirmReservation);
+// Route pour supprimer une réservation
+router.delete('/:id', reservationController.deleteReservation);
 
 module.exports = router;
