@@ -6,25 +6,14 @@ const db = require('./db');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
-
 // Middleware pour analyser les requêtes JSON
 app.use(express.json()); // Utilisation du middleware intégré d'Express
 
 // Middleware CORS avec options spécifiques (si nécessaire)
-// const corsOptions = {
-//   origin: 'http://example.com', // Origine autorisée
-//   methods: 'GET,POST,PUT,DELETE', // Méthodes HTTP autorisées
-//   allowedHeaders: 'Content-Type,Authorization'
-// };
-// app.use(cors(corsOptions));
 app.use(cors());
-// Middleware pour valider les entrées (facultatif)
-app.use((req, res, next) => {
-  next();
-});
 
 // Import des fichiers de routes
-const {   } = require('./routes/authMiddleware'); // Importez   de manière destructurée
+const { createToken, verifyToken, checkRole } = require('./routes/authMiddleware'); // Importez les middlewares
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/clients');
 const voyageRoutes = require('./routes/voyages');
@@ -36,19 +25,22 @@ const vehiculeRoutes = require('./routes/vehicule');
 const chauffeurRoutes = require('./routes/chauffeur');
 const classeRoutes = require('./routes/classe');
 
-// Protection des routes avec le middleware  
+// Protection des routes avec le middleware `verifyToken`
+// Routes protégées nécessitant un token valide
+app.use('/api/clients', verifyToken, clientRoutes); 
+app.use('/api/voyages', verifyToken, voyageRoutes);
+app.use('/api/reservations', verifyToken, reservationRoutes);
+app.use('/api/paiements', verifyToken, paiementRoutes);
+app.use('/api/trajets', verifyToken, trajetRoutes);
+app.use('/api/vehicules', verifyToken, vehiculeRoutes);
+app.use('/api/chauffeurs', verifyToken, chauffeurRoutes);
+app.use('/api/classes', verifyToken, classeRoutes);
 
-app.use('/api/auth' , authRoutes);
-app.use('/api/auth' ,  authRoutes);
-app.use('/api/clients' ,   clientRoutes); 
-app.use('/api/voyages' ,   voyageRoutes);
-app.use('/api/reservations' ,   reservationRoutes);
-app.use('/api/paiements' ,   paiementRoutes);
-app.use('/api/admin' ,   administrationRoutes);
-app.use('/api/trajets' ,   trajetRoutes);
-app.use('/api/vehicules' ,   vehiculeRoutes);
-app.use('/api/chauffeurs' ,   chauffeurRoutes);
-app.use('/api/classes' ,   classeRoutes);
+// Routes d'authentification (création de token) - Pas besoin de `verifyToken`
+app.use('/api/auth', authRoutes); // La route pour l'authentification est libre, elle appelle `createToken` dans le contrôleur
+
+// Route d'administration (exemple de vérification du rôle)
+app.use('/api/admin', verifyToken, checkRole('admin'), administrationRoutes);
 
 // Route d'accueil par défaut
 app.get('/', (req, res) => {
