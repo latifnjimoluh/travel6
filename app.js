@@ -17,14 +17,14 @@ app.use(express.json()); // Utilisation du middleware intégré d'Express
 //   allowedHeaders: 'Content-Type,Authorization'
 // };
 // app.use(cors(corsOptions));
-
+app.use(cors());
 // Middleware pour valider les entrées (facultatif)
 app.use((req, res, next) => {
   next();
 });
 
 // Import des fichiers de routes
-const { verifyToken } = require('./routes/authMiddleware'); // Importez verifyToken de manière destructurée
+const {   } = require('./routes/authMiddleware'); // Importez   de manière destructurée
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/clients');
 const voyageRoutes = require('./routes/voyages');
@@ -36,19 +36,19 @@ const vehiculeRoutes = require('./routes/vehicule');
 const chauffeurRoutes = require('./routes/chauffeur');
 const classeRoutes = require('./routes/classe');
 
-// Protection des routes avec le middleware verifyToken
+// Protection des routes avec le middleware  
 
-app.use('/api/auth', verifyToken, authRoutes);
-app.use('/api/auth', verifyToken,  authRoutes);
-app.use('/api/clients', verifyToken,   clientRoutes); 
-app.use('/api/voyages', verifyToken,   voyageRoutes);
-app.use('/api/reservations', verifyToken,   reservationRoutes);
-app.use('/api/paiements', verifyToken,   paiementRoutes);
-app.use('/api/admin', verifyToken,   administrationRoutes);
-app.use('/api/trajets', verifyToken,   trajetRoutes);
-app.use('/api/vehicules', verifyToken,   vehiculeRoutes);
-app.use('/api/chauffeurs', verifyToken,   chauffeurRoutes);
-app.use('/api/classes', verifyToken,   classeRoutes);
+app.use('/api/auth' , authRoutes);
+app.use('/api/auth' ,  authRoutes);
+app.use('/api/clients' ,   clientRoutes); 
+app.use('/api/voyages' ,   voyageRoutes);
+app.use('/api/reservations' ,   reservationRoutes);
+app.use('/api/paiements' ,   paiementRoutes);
+app.use('/api/admin' ,   administrationRoutes);
+app.use('/api/trajets' ,   trajetRoutes);
+app.use('/api/vehicules' ,   vehiculeRoutes);
+app.use('/api/chauffeurs' ,   chauffeurRoutes);
+app.use('/api/classes' ,   classeRoutes);
 
 // Route d'accueil par défaut
 app.get('/', (req, res) => {
