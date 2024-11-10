@@ -11,9 +11,6 @@ router.get('/', voyageController.getAllVoyages);
 // Route pour obtenir un voyage par ID
 router.get('/:id', voyageController.getVoyageById);
 
-// Route pour rechercher des voyages par date et destination
-router.get('/search', voyageController.searchVoyages); // Ajout de la route pour la recherche
-
 // Route pour créer un nouveau voyage
 router.post('/', voyageController.createVoyage);
 

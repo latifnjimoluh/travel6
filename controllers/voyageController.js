@@ -1,59 +1,15 @@
 const db = require('../db');
 
-// Rechercher des voyages par date et destination
-exports.searchVoyages = (req, res) => {
-  const { date, destination } = req.query;
-
-  // Construction de la requête SQL de base
-  let sql = `
-    SELECT voyage.*, trajet.*, vehicule.*, classe.nom_classe, classe.prix_classe AS prix_classe, trajet.ville_depart, trajet.ville_arrivee
-    FROM voyage 
-    JOIN trajet ON voyage.id_trajet = trajet.id_trajet
-    JOIN vehicule ON voyage.id_vehicule = vehicule.id_vehicule
-    JOIN classe ON voyage.id_classe = classe.id_classe
-    WHERE 1=1
-  `;
-
-  const queryParams = [];
-
-  // Ajouter un filtre pour la date si elle est fournie
-  if (date) {
-    sql += ' AND DATE(voyage.heure_depart) = ?';  // Utilisation de DATE pour comparer uniquement la date
-    queryParams.push(date);
-  }
-
-  // Ajouter un filtre pour la destination si elle est fournie
-  if (destination) {
-    sql += ' AND trajet.ville_arrivee LIKE ?';  // Recherche la destination partiellement
-    queryParams.push(`%${destination}%`);
-  }
-
-  // Debug: Affichage de la requête SQL et des paramètres pour vérifier leur contenu
-  console.log('SQL:', sql);
-  console.log('Params:', queryParams);
-
-  // Exécution de la requête SQL
-  db.query(sql, queryParams, (err, results) => {
-    if (err) {
-      console.error('Erreur SQL:', err.message);  // Si une erreur SQL se produit, l'afficher dans la console
-      return res.status(500).json({ error: err.message });
-    }
-    // Vérification si aucun voyage n'est trouvé
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Voyage non trouvé" });
-    }
-    // Si des voyages sont trouvés, renvoyer les résultats
-    res.json(results);
-  });
-};
 
 // Obtenir tous les voyages avec options de tri
+// Obtenir tous les voyages avec options de tri et filtres dynamiques
 exports.getAllVoyages = (req, res) => {
-  let { sort_by, order } = req.query;
+  let { sort_by, order, from, to, date_depart } = req.query;
 
   sort_by = sort_by || 'heure_depart';  // Par défaut, trier par heure de départ
   order = order || 'ASC';  // Par défaut, ordre croissant
 
+  // Construction de la requête SQL de base avec jointures
   let sql = `
     SELECT voyage.*, trajet.*, vehicule.*, classe.nom_classe, classe.prix_classe AS prix_classe, trajet.ville_depart, trajet.ville_arrivee
     FROM voyage 
@@ -61,7 +17,24 @@ exports.getAllVoyages = (req, res) => {
     JOIN vehicule ON voyage.id_vehicule = vehicule.id_vehicule
     JOIN classe ON voyage.id_classe = classe.id_classe
   `;
-  
+
+  // Filtrage dynamique
+  const conditions = [];
+  if (from) {
+    conditions.push(`trajet.ville_depart = '${from}'`);
+  }
+  if (to) {
+    conditions.push(`trajet.ville_arrivee = '${to}'`);
+  }
+  if (date_depart) {
+    conditions.push(`DATE(voyage.heure_depart) = '${date_depart}'`);
+  }
+
+  // Si des conditions de filtre sont présentes, ajouter à la requête
+  if (conditions.length > 0) {
+    sql += ' WHERE ' + conditions.join(' AND ');
+  }
+
   // Ajout du critère de tri selon la colonne spécifiée
   if (sort_by === 'classe') {
     sql += ' ORDER BY id_classe ' + order;
