@@ -1,8 +1,6 @@
 const db = require('../db');
 
-
 // Obtenir tous les voyages avec options de tri
-// Obtenir tous les voyages avec options de tri et filtres dynamiques
 exports.getAllVoyages = (req, res) => {
   let { sort_by, order, from, to, date_depart } = req.query;
 
@@ -142,5 +140,105 @@ exports.updateStatutVoyage = (req, res) => {
   db.query(sql, [statut, req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });  // Erreur lors de la mise à jour du statut
     res.json({ message: 'Statut du voyage mis à jour avec succès' });  // Succès
+  });
+};
+
+// Récupérer le nombre total de places d'un voyage
+exports.getTotalPlaces = (req, res) => {
+  const { id_voyage } = req.params;
+
+  const sql = 'SELECT nombre_de_places FROM voyage WHERE id_voyage = ?';
+  db.query(sql, [id_voyage], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Voyage non trouvé' });
+    }
+    res.json({ nombre_de_places: result[0].nombre_de_places });
+  });
+};
+
+// Récupérer le nombre de places réservées pour un voyage
+exports.getBookedPlaces = (req, res) => {
+  const { id_voyage } = req.params;
+
+  const sql = `
+    SELECT reservation_place.numero_place, reservation_place.cote
+    FROM reservation_place
+    JOIN reservation ON reservation_place.id_reservation = reservation.id_reservation
+    WHERE reservation.id_voyage = ?
+  `;
+
+  db.query(sql, [id_voyage], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);  // Renvoie un tableau des places réservées
+  });
+};
+
+
+// Récupérer le nombre de places disponibles pour un voyage
+exports.getAvailablePlaces = (req, res) => {
+  const { id_voyage } = req.params;
+
+  const sql = `
+    SELECT reservation_place.numero_place, reservation_place.cote,
+           CASE 
+             WHEN reservation_place.id_voyage IS NULL THEN 'available' 
+             ELSE 'booked' 
+           END AS place_status
+    FROM reservation_place
+    LEFT JOIN voyage ON reservation_place.id_voyage = voyage.id_voyage
+    WHERE reservation_place.id_voyage = ?
+  `;
+
+  db.query(sql, [id_voyage], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);  // Maintenant renvoie un tableau d'objets avec le statut de chaque place
+  });
+};
+
+
+
+exports.getPlacesWithLocation = (req, res) => {
+  const { id_voyage } = req.params;
+
+  // SQL pour obtenir les places et les informations associées
+  const sql = `
+    SELECT 
+      place.position AS numero_place,  
+      place.cote,
+      ligne_siege.numero_ligne,
+      ligne_siege.nombre_sieges_gauche,
+      ligne_siege.nombre_sieges_droite,
+      CASE 
+          WHEN reservation_place.numero_place IS NOT NULL THEN 'booked' 
+          ELSE 'available' 
+      END AS place_status,
+      trajet.ville_depart, 
+      trajet.ville_arrivee,
+      vehicule.nombreplaces  -- Nombre total de places dans le véhicule
+    FROM place
+    LEFT JOIN ligne_siege ON place.id_ligne = ligne_siege.id_ligne
+    LEFT JOIN reservation_place ON place.id_place = reservation_place.numero_place AND reservation_place.id_voyage = ?
+    JOIN voyage ON reservation_place.id_voyage = voyage.id_voyage
+    JOIN trajet ON voyage.id_trajet = trajet.id_trajet
+    JOIN vehicule ON ligne_siege.id_vehicule = vehicule.id_vehicule
+    WHERE voyage.id_voyage = ?
+  `;
+
+  db.query(sql, [id_voyage, id_voyage], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    // Calcul du nombre total de places et des réservations
+    const totalSeats = result[0]?.nombreplaces || 0;  // Utilise nombreplaces du véhicule comme nombre total de places
+    const bookedSeats = result.filter(seat => seat.place_status === 'booked').length;
+    const availableSeats = totalSeats - bookedSeats;  // Nombre de places disponibles
+
+    // Envoi des résultats sous forme de réponse
+    res.json({
+      totalSeats,
+      bookedSeats,
+      availableSeats,
+      seats: result
+    });
   });
 };

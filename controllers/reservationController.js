@@ -2,35 +2,43 @@ const db = require('../db');
 
 // Créer une nouvelle réservation
 exports.createReservation = (req, res) => {
-  const { statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive } = req.body;
+  const { statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive, numero_place, cote } = req.body;
 
   // Insertion de la réservation
   const sql = 'INSERT INTO reservation (statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive) VALUES (?, ?, ?, ?, ?, ?)';
   db.query(sql, [statut_reservation, id_client, id_voyage, id_paiement, heure_depart, heure_arrive], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
 
-    // Mise à jour du nombre de places dans le voyage
-    let updateSql;
-    if (statut_reservation === 'confirmee' || statut_reservation === 'en attente') {
-      updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places - 1 WHERE id_voyage = ?';
-    } else if (statut_reservation === 'annulee') {
-      updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places + 1 WHERE id_voyage = ?';
-    }
+    // Assigner une place au client dans la table reservation_place
+    const reservationId = result.insertId;
+    const placeSql = 'INSERT INTO reservation_place (id_reservation, id_client, id_voyage, numero_place, cote) VALUES (?, ?, ?, ?, ?)';
+    db.query(placeSql, [reservationId, id_client, id_voyage, numero_place, cote], (err2) => {
+      if (err2) return res.status(500).json({ error: err2.message });
 
-    if (updateSql) {
-      db.query(updateSql, [id_voyage], (err2) => {
-        if (err2) return res.status(500).json({ error: err2.message });
-        res.status(201).json({ message: 'Réservation créée avec succès', id_reservation: result.insertId });
-      });
-    } else {
-      res.status(201).json({ message: 'Réservation créée avec succès', id_reservation: result.insertId });
-    }
+      // Mise à jour du nombre de places dans le voyage
+      let updateSql;
+      if (statut_reservation === 'confirmee' || statut_reservation === 'en attente') {
+        updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places - 1 WHERE id_voyage = ?';
+      } else if (statut_reservation === 'annulee') {
+        updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places + 1 WHERE id_voyage = ?';
+      }
+
+      if (updateSql) {
+        db.query(updateSql, [id_voyage], (err3) => {
+          if (err3) return res.status(500).json({ error: err3.message });
+          res.status(201).json({ message: 'Réservation et place créées avec succès', id_reservation: result.insertId });
+        });
+      } else {
+        res.status(201).json({ message: 'Réservation et place créées avec succès', id_reservation: result.insertId });
+      }
+    });
   });
 };
 
+
 // Supprimer une réservation
 exports.deleteReservation = (req, res) => {
-  // Obtenir le voyage associé à la réservation pour mettre à jour le nombre de places
+  // Obtenir la réservation et ses détails de place
   const getReservationSql = 'SELECT id_voyage, statut_reservation FROM reservation WHERE id_reservation = ?';
   db.query(getReservationSql, [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -38,30 +46,37 @@ exports.deleteReservation = (req, res) => {
 
     const { id_voyage, statut_reservation } = result[0];
 
-    // Suppression de la réservation
-    const deleteSql = 'DELETE FROM reservation WHERE id_reservation = ?';
-    db.query(deleteSql, [req.params.id], (err2) => {
+    // Supprimer les entrées de place réservée dans reservation_place
+    const deletePlaceSql = 'DELETE FROM reservation_place WHERE id_reservation = ?';
+    db.query(deletePlaceSql, [req.params.id], (err2) => {
       if (err2) return res.status(500).json({ error: err2.message });
 
-      // Mise à jour du nombre de places dans le voyage après la suppression
-      let updateSql;
-      if (statut_reservation === 'confirmee' || statut_reservation === 'en attente') {
-        updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places + 1 WHERE id_voyage = ?';
-      } else if (statut_reservation === 'annulee') {
-        updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places - 1 WHERE id_voyage = ?';
-      }
+      // Suppression de la réservation
+      const deleteSql = 'DELETE FROM reservation WHERE id_reservation = ?';
+      db.query(deleteSql, [req.params.id], (err3) => {
+        if (err3) return res.status(500).json({ error: err3.message });
 
-      if (updateSql) {
-        db.query(updateSql, [id_voyage], (err3) => {
-          if (err3) return res.status(500).json({ error: err3.message });
+        // Mise à jour du nombre de places dans le voyage après la suppression
+        let updateSql;
+        if (statut_reservation === 'confirmee' || statut_reservation === 'en attente') {
+          updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places + 1 WHERE id_voyage = ?';
+        } else if (statut_reservation === 'annulee') {
+          updateSql = 'UPDATE voyage SET nombre_de_places = nombre_de_places - 1 WHERE id_voyage = ?';
+        }
+
+        if (updateSql) {
+          db.query(updateSql, [id_voyage], (err4) => {
+            if (err4) return res.status(500).json({ error: err4.message });
+            res.json({ message: 'Réservation supprimée avec succès' });
+          });
+        } else {
           res.json({ message: 'Réservation supprimée avec succès' });
-        });
-      } else {
-        res.json({ message: 'Réservation supprimée avec succès' });
-      }
+        }
+      });
     });
   });
 };
+
 
 // Mettre à jour une réservation
 exports.updateReservation = (req, res) => {
