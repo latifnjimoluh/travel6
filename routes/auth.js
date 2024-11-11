@@ -11,6 +11,8 @@ router.post('/registerClient', authController.registerClient);
 // Route pour la connexion d'un client
 router.post('/loginClient', authController.loginClient);
 
+router.post('/logoutClient', authController.logoutClient);
+
 // Route pour l'inscription d'un employé
 router.post('/registerEmployee', authController.registerEmployee);
 

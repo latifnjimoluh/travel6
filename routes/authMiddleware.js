@@ -2,6 +2,8 @@
 require('dotenv').config(); // Charger les variables d'environnement depuis .env
 const jwt = require('jsonwebtoken'); // Importer la librairie JWT
 const secret = process.env.SECRET_KEY; // Récupérer la clé secrète depuis le fichier .env
+const revokedTokens = new Set(); // Une liste en mémoire pour stocker les tokens révoqués temporairement
+
 
 // Fonction pour créer un token JWT
 function createToken(tos) {
@@ -12,20 +14,27 @@ function createToken(tos) {
 
 // Fonction middleware pour vérifier le token JWT
 function verifyToken(req, res, next) {
-    const authHeader = req.headers['authorization']; // Récupérer l'en-tête Authorization de la requête
+    const authHeader = req.headers['authorization'];
     if (typeof authHeader != 'undefined' && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.slice(7); // Extraire le token du préfixe 'Bearer'
+        const token = authHeader.slice(7);
+        
+        // Vérifier si le token est dans la liste des tokens révoqués
+        if (revokedTokens.has(token)) {
+            return res.status(401).json({ message: 'Token révoqué. Veuillez vous reconnecter.' });
+        }
+        
         try {
-            const decodedToken = jwt.verify(token, secret); // Vérifier le token avec la clé secrète
-            req.user = decodedToken; // Ajouter l'utilisateur décodé à la requête pour un accès ultérieur
-            next(); // Passer au middleware suivant
+            const decodedToken = jwt.verify(token, secret);
+            req.user = decodedToken;
+            next();
         } catch (error) {
-            res.status(401).json({ message: 'Token invalide' }); // Si le token est invalide
+            res.status(401).json({ message: 'Token invalide' });
         }
     } else {
-        res.status(401).json({ message: 'Token manquant ou malformé' }); // Si l'en-tête Authorization est absent ou mal formé
+        res.status(401).json({ message: 'Token manquant ou malformé' });
     }
 }
+
 
 // Middleware pour vérifier les rôles des utilisateurs
 function checkRole(role) {

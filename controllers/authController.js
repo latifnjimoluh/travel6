@@ -112,3 +112,14 @@ exports.loginEmployee = (req, res) => {
     });
   });
 };
+
+// Dans auth.js ou un autre fichier de routes
+exports.logoutClient = (req, res) => {
+  const token = req.headers['authorization']?.slice(7); // Extraire le token de l'en-tête Authorization
+  if (token) {
+      revokedTokens.add(token); // Ajouter le token à la liste des tokens révoqués
+      res.json({ message: 'Déconnexion réussie' });
+  } else {
+      res.status(400).json({ message: 'Token manquant pour la déconnexion' });
+  }
+};
