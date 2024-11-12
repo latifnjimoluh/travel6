@@ -242,3 +242,43 @@ exports.getPlacesWithLocation = (req, res) => {
     });
   });
 };
+
+
+
+exports.getSeatInfo = (req, res) => {
+  const { voyageId } = req.params; // Récupérer l'id du voyage depuis les paramètres de l'URL
+
+  const sql = `
+    SELECT 
+        v.id_voyage,
+        v.id_vehicule,
+        v.nombre_de_places AS total_places,  
+        (v.nombre_de_places - COUNT(rp.id_reservation_place)) AS places_libres,
+        GROUP_CONCAT(p.id_place ORDER BY p.id_place) AS places_occupees 
+    FROM
+        voyage v
+    LEFT JOIN
+        reservation_place rp ON v.id_voyage = rp.id_voyage
+    LEFT JOIN
+        place p ON rp.numero_place = p.id_place
+    JOIN
+        vehicule ve ON v.id_vehicule = ve.id_vehicule
+    WHERE
+        v.id_voyage = ?  -- Ajout de la condition pour filtrer par voyageId
+    GROUP BY
+        v.id_voyage, v.id_vehicule, v.nombre_de_places;
+  `;
+
+  // Exécuter la requête SQL avec le paramètre voyageId
+  db.query(sql, [voyageId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });  // Si erreur de requête SQL
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Voyage non trouvé' });  // Si aucun voyage trouvé
+    }
+
+    // Retourner les résultats
+    res.json(result[0]);
+  });
+};

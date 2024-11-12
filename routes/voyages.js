@@ -23,6 +23,8 @@ router.put('/:id/cancel', voyageController.cancelVoyage);
 // Route pour mettre à jour uniquement le statut d'un voyage
 router.put('/:id/statut', voyageController.updateStatutVoyage);
 
+router.get('/:voyageId/seats', voyageController.getSeatInfo);  
+
 // Nouvelles routes pour la gestion des places
 router.get('/:id_voyage/total-places', voyageController.getTotalPlaces);
 router.get('/:id_voyage/booked-places', voyageController.getBookedPlaces);

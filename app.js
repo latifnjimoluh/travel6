@@ -28,7 +28,7 @@ const classeRoutes = require('./routes/classe');
 // Protection des routes avec le middleware `verifyToken`
 // Routes protégées nécessitant un token valide
 app.use('/api/clients', verifyToken, clientRoutes); 
-app.use('/api/voyages', verifyToken, voyageRoutes);
+app.use('/api/voyages', voyageRoutes);
 app.use('/api/reservations', verifyToken, reservationRoutes);
 app.use('/api/paiements', verifyToken, paiementRoutes);
 app.use('/api/trajets', verifyToken, trajetRoutes);
