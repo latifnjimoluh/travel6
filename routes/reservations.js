@@ -8,8 +8,10 @@ router.use(express.json());
 // Route pour obtenir toutes les réservations
 router.get('/', reservationController.getAllReservations);
 
-// Route pour obtenir une réservation par ID
-router.get('/:id', reservationController.getReservationById);
+// Route pour obtenir toutes les réservations d'un utilisateur par ID et statut
+router.get('/client/:id', reservationController.getReservationsByClientId);
+// Route pour récupérer les réservations filtrées par statut
+router.get('/client/:id/status/:status', reservationController.getReservationsByClientIdAndStatus);
 
 // Route pour créer une nouvelle réservation
 router.post('/', reservationController.createReservation);

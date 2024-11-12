@@ -128,7 +128,7 @@ exports.updateReservation = (req, res) => {
 exports.getAllReservations = (req, res) => {
   const { sortBy, clientName, startDate, endDate } = req.query;
 
-  let sql = 'SELECT reservation.*, client.nom FROM reservation JOIN client ON reservation.id_client = client.id_client';
+  let sql = 'SELECT reservation.*, client.nom_client FROM reservation JOIN client ON reservation.id_client = client.id_client';
 
   // Filtrer par nom du client
   if (clientName) {
@@ -153,13 +153,70 @@ exports.getAllReservations = (req, res) => {
 };
 
 // Récupérer une réservation par ID
-exports.getReservationById = (req, res) => {
-  const sql = 'SELECT reservation.*, client.nom FROM reservation JOIN client ON reservation.id_client = client.id_client WHERE id_reservation = ?';
+exports.getReservationsByClientId = (req, res) => {
+  const sql = `
+  SELECT
+    c.nom_client AS nom_utilisateur,
+    CONCAT(t.ville_depart, ' - ', t.ville_arrivee) AS trajet,
+    cl.prix_classe AS prix_reservation,
+    r.heure_depart,
+    r.heure_arrive,
+    r.statut AS statut_reservation
+  FROM
+    reservation r
+  JOIN
+    client c ON r.id_client = c.id_client
+  JOIN
+    voyage v ON r.id_voyage = v.id_voyage
+  JOIN
+    trajet t ON v.id_trajet = t.id_trajet
+  JOIN
+    classe cl ON v.id_classe = cl.id_classe
+  WHERE
+    r.id_client = ?;
+  `;
+  
   db.query(sql, [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Réservation non trouvée' });
+      return res.status(404).json({ message: 'Aucune réservation trouvée pour cet utilisateur.' });
     }
-    res.json(result[0]);
+    res.json(result);  // Retourner toutes les réservations
+  });
+};
+
+// Récupérer les réservations d'un utilisateur par ID et statut
+
+// Dans le controller
+exports.getReservationsByClientIdAndStatus = (req, res) => {
+  const { id, status } = req.params;
+  const sql = `
+    SELECT
+      c.nom_client AS nom_utilisateur,
+      CONCAT(t.ville_depart, ' - ', t.ville_arrivee) AS trajet,
+      cl.prix_classe AS prix_reservation,
+      r.heure_depart,
+      r.heure_arrive,
+      r.statut AS statut_reservation
+    FROM
+      reservation r
+    JOIN
+      client c ON r.id_client = c.id_client
+    JOIN
+      voyage v ON r.id_voyage = v.id_voyage
+    JOIN
+      trajet t ON v.id_trajet = t.id_trajet
+    JOIN
+      classe cl ON v.id_classe = cl.id_classe
+    WHERE
+      r.id_client = ? AND r.statut = ?;
+  `;
+  
+  db.query(sql, [id, status], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Aucune réservation trouvée pour cet utilisateur avec ce statut.' });
+    }
+    res.json(result);
   });
 };

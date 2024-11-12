@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 // Partie Administrateur
-
+ 
 // Obtenir tous les clients
 exports.getAllClients = (req, res) => {
   const sql = 'SELECT * FROM client';
